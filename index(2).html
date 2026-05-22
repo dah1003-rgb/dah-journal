@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedJournal — 學術期刊管理平台</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg1:#fff;--bg2:#f5f5f4;--bg3:#eeede8;--tx1:#1a1a18;--tx2:#5f5e5a;--tx3:#888780;--bd3:rgba(0,0,0,0.12);--bd2:rgba(0,0,0,0.22);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;--r8:8px;--r12:12px;--green:#1D9E75;--green2:#0F6E56;--green3:#E1F5EE;}
+@media(prefers-color-scheme:dark){:root{--bg1:#1c1c1a;--bg2:#242422;--bg3:#2c2c2a;--tx1:#f0efea;--tx2:#b4b2a9;--tx3:#888780;--bd3:rgba(255,255,255,0.10);--bd2:rgba(255,255,255,0.18);}}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--font);background:var(--bg3);color:var(--tx1);}
+
+/* ── LOGIN PAGE ── */
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0F6E56 0%,#1D9E75 50%,#5DCAA5 100%);}
+.login-box{background:var(--bg1);border-radius:var(--r12);padding:40px;width:380px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.18);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo i{font-size:40px;color:var(--green);}
+.login-title{font-size:20px;font-weight:600;color:var(--tx1);margin-top:8px;}
+.login-sub{font-size:13px;color:var(--tx2);margin-top:4px;}
+.login-form .form-group{margin-bottom:16px;}
+.login-form label{font-size:13px;font-weight:500;display:block;margin-bottom:6px;}
+.login-form input{width:100%;padding:10px 14px;border:0.5px solid var(--bd2);border-radius:var(--r8);font-size:14px;background:var(--bg1);color:var(--tx1);outline:none;font-family:var(--font);}
+.login-form input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.12);}
+.login-btn{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:var(--r8);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font);transition:background 0.15s;margin-top:4px;}
+.login-btn:hover{background:var(--green2);}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.login-err{background:#FCEBEB;color:#A32D2D;border-radius:var(--r8);padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;}
+
+/* ── APP ── */
+.app-page{display:none;height:100vh;}
+.app-page.show{display:flex;}
+.wrapper{display:flex;flex-direction:column;flex:1;max-width:1100px;margin:0 auto;padding:24px;height:100vh;}
+.app{display:flex;flex:1;overflow:hidden;border:0.5px solid var(--bd3);border-radius:var(--r12);background:var(--bg1);box-shadow:0 2px 16px rgba(0,0,0,0.08);}
+.sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:0.5px solid var(--bd3);display:flex;flex-direction:column;padding:20px 0;overflow-y:auto;}
+.logo{padding:0 20px 20px;border-bottom:0.5px solid var(--bd3);margin-bottom:12px;}
+.logo-t{font-size:15px;font-weight:500;}
+.logo-s{font-size:11px;color:var(--tx2);margin-top:2px;}
+.nav-sec{padding:6px 12px 4px;font-size:10px;color:var(--tx3);letter-spacing:0.08em;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;font-size:13px;color:var(--tx2);border-left:2px solid transparent;transition:all 0.15s;user-select:none;}
+.nav-item:hover{background:var(--bg1);color:var(--tx1);}
+.nav-item.active{background:var(--bg1);color:var(--tx1);border-left-color:#5DCAA5;font-weight:500;}
+.nav-item i{font-size:16px;}
+.badge{background:#5DCAA5;color:#04342C;font-size:10px;font-weight:500;border-radius:10px;padding:1px 6px;margin-left:auto;}
+.badge.or{background:#FAC775;color:#412402;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{padding:16px 24px;border-bottom:0.5px solid var(--bd3);display:flex;align-items:center;justify-content:space-between;background:var(--bg1);flex-shrink:0;}
+.topbar-title{font-size:16px;font-weight:500;}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.user-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg2);border-radius:20px;font-size:12px;color:var(--tx2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r8);font-size:13px;cursor:pointer;border:0.5px solid var(--bd2);background:var(--bg1);color:var(--tx1);transition:all 0.15s;font-family:var(--font);}
+.btn:hover{background:var(--bg2);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-primary{background:var(--green);color:#fff;border-color:var(--green);}
+.btn-primary:hover{background:var(--green2);}
+.btn-danger{background:#E24B4A;color:#fff;border-color:#E24B4A;}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.content{flex:1;overflow-y:auto;padding:24px;}
+.section{display:none;}
+.section.active{display:block;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--bg2);border-radius:var(--r8);padding:14px 16px;}
+.stat-label{font-size:12px;color:var(--tx2);margin-bottom:6px;}
+.stat-value{font-size:22px;font-weight:500;}
+.stat-delta{font-size:11px;color:var(--green);margin-top:2px;}
+.table-wrap{background:var(--bg1);border:0.5px solid var(--bd3);border-radius:var(--r12);overflow:hidden;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead{background:var(--bg2);}
+th{padding:10px 16px;text-align:left;font-weight:500;font-size:11px;color:var(--tx2);letter-spacing:0.05em;text-transform:uppercase;}
+td{padding:11px 16px;border-top:0.5px solid var(--bd3);color:var(--tx1);vertical-align:middle;}
+tr:hover td{background:var(--bg2);}
+.chip{font-size:10px;padding:2px 8px;border-radius:10px;border:0.5px solid var(--bd3);color:var(--tx2);background:var(--bg2);white-space:nowrap;}
+.chip.green{background:#E1F5EE;color:#0F6E56;border-color:#9FE1CB;}
+.chip.amber{background:#FAEEDA;color:#854F0B;border-color:#FAC775;}
+.chip.blue{background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;}
+.chip.red{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1;}
+.chip.purple{background:#EEEDFE;color:#3C3489;border-color:#C5C2F9;}
+.form-group{margin-bottom:16px;}
+.form-label{font-size:13px;font-weight:500;margin-bottom:6px;display:block;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+input[type=text],input[type=number],input[type=date],input[type=email],textarea,select{width:100%;padding:9px 12px;border:0.5px solid var(--bd2);border-radius:var(--r8);font-size:13px;background:var(--bg1);color:var(--tx1);font-family:var(--font);outline:none;transition:border-color 0.15s;}
+input:focus,textarea:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.12);}
+textarea{resize:vertical;min-height:80px;}
+.sec-title{font-size:14px;font-weight:500;margin-bottom:14px;}
+.loading{text-align:center;padding:40px;color:var(--tx2);font-size:13px;}
+.empty{text-align:center;padding:40px;color:var(--tx3);font-size:13px;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;padding:12px 20px;border-radius:var(--r8);font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast.show{opacity:1;}
+.toast.err{background:#E24B4A;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--bg1);border-radius:var(--r12);padding:24px;width:620px;max-width:95vw;max-height:88vh;overflow-y:auto;border:0.5px solid var(--bd3);}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:15px;font-weight:500;}
+.modal-ftr{display:flex;gap:8px;justify-content:flex-end;padding-top:16px;border-top:0.5px solid var(--bd3);margin-top:16px;}
+.upload-zone{border:1px dashed var(--bd2);border-radius:var(--r8);padding:18px;text-align:center;color:var(--tx2);font-size:13px;cursor:pointer;background:var(--bg2);transition:border-color 0.15s,background 0.15s;position:relative;}
+.upload-zone:hover{border-color:var(--green);background:var(--green3);}
+.upload-zone i{font-size:22px;display:block;margin-bottom:6px;color:var(--tx3);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.file-shown{display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--green3);border-radius:var(--r8);margin-top:8px;font-size:12px;color:#0F6E56;}
+.prog{height:4px;background:var(--bd3);border-radius:2px;margin-top:8px;overflow:hidden;display:none;}
+.prog-fill{height:4px;background:var(--green);width:0%;transition:width 0.3s;border-radius:2px;}
+/* detail */
+.detail-card{background:var(--bg2);border-radius:var(--r12);padding:20px;margin-bottom:16px;}
+.detail-title{font-size:16px;font-weight:600;line-height:1.5;margin-bottom:12px;}
+.detail-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.meta-item{font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;}
+.detail-sec{margin-top:16px;padding-top:16px;border-top:0.5px solid var(--bd3);}
+.detail-sec-title{font-size:11px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;}
+.detail-body{font-size:13px;line-height:1.75;color:var(--tx1);}
+.file-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#E6F1FB;color:#185FA5;border-radius:var(--r8);font-size:13px;text-decoration:none;border:0.5px solid #B5D4F4;}
+.file-link:hover{background:#B5D4F4;}
+.rev-card{background:var(--bg1);border:0.5px solid var(--bd3);border-radius:var(--r8);padding:14px;margin-bottom:10px;}
+.rev-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.cmt{background:var(--bg2);border-left:2px solid #5DCAA5;border-radius:0 var(--r8) var(--r8) 0;padding:10px 14px;margin-top:8px;font-size:13px;line-height:1.6;}
+.cmt.major{border-left-color:#378ADD;}
+.cmt.minor{border-left-color:#FAC775;}
+.cmt-lbl{font-size:10px;font-weight:500;color:#0F6E56;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;}
+.cmt-lbl.major{color:#185FA5;}
+.cmt-lbl.minor{color:#854F0B;}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);cursor:pointer;margin-bottom:16px;}
+.back-btn:hover{color:var(--tx1);}
+.assign-box{background:var(--bg2);border-radius:var(--r8);padding:16px;border:0.5px solid var(--bd3);margin-top:12px;}
+.info-box{background:#E6F1FB;border-radius:var(--r8);padding:12px 16px;font-size:13px;color:#185FA5;margin-bottom:16px;display:flex;gap:8px;align-items:center;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="login-page" id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <i class="ti ti-book-2"></i>
+      <div class="login-title">MedJournal</div>
+      <div class="login-sub">學術期刊管理平台</div>
+    </div>
+    <div id="login-err" class="login-err"></div>
+    <div class="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="l-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>密碼</label>
+        <input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">登入</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP PAGE -->
+<div class="app-page" id="app-page">
+  <div class="wrapper">
+    <div class="app">
+      <div class="sidebar">
+        <div class="logo">
+          <div class="logo-t"><i class="ti ti-book-2" style="font-size:16px;margin-right:6px;"></i>MedJournal</div>
+          <div class="logo-s" id="sidebar-role">—</div>
+        </div>
+        <!-- Chief Editor Menu -->
+        <div id="menu-chief">
+          <div class="nav-sec">主選單</div>
+          <div class="nav-item active" onclick="nav('dashboard',this)"><i class="ti ti-layout-dashboard"></i>總覽</div>
+          <div class="nav-item" onclick="nav('submit',this)"><i class="ti ti-upload"></i>新稿投稿</div>
+          <div class="nav-item" onclick="nav('manuscripts',this)"><i class="ti ti-files"></i>所有稿件 <span class="badge" id="ms-badge">0</span></div>
+          <div class="nav-sec">審稿管理</div>
+          <div class="nav-item" onclick="nav('review',this)"><i class="ti ti-clipboard-check"></i>所有審稿 <span class="badge or" id="rev-badge">0</span></div>
+          <div class="nav-item" onclick="nav('reviewers',this)"><i class="ti ti-users"></i>審稿人管理</div>
+          <div class="nav-sec">發表</div>
+          <div class="nav-item" onclick="nav('published',this)"><i class="ti ti-certificate"></i>已發表文章</div>
+          <div class="nav-item" onclick="nav('addpub',this)"><i class="ti ti-plus"></i>新增發表</div>
+          <div class="nav-sec">統計</div>
+          <div class="nav-item" onclick="nav('stats',this)"><i class="ti ti-chart-bar"></i>統計報表</div>
+        </div>
+        <!-- Reviewer Menu -->
+        <div id="menu-reviewer" style="display:none;">
+          <div class="nav-sec">我的工作</div>
+          <div class="nav-item active" onclick="nav('my-reviews',this)"><i class="ti ti-clipboard-check"></i>我的審稿任務</div>
+          <div class="nav-item" onclick="nav('my-manuscripts',this)"><i class="ti ti-files"></i>我投稿的稿件</div>
+          <div class="nav-item" onclick="nav('submit',this)"><i class="ti ti-upload"></i>新稿投稿</div>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="topbar">
+          <div class="topbar-title" id="page-title">總覽</div>
+          <div class="topbar-actions">
+            <div class="user-chip"><i class="ti ti-user" style="font-size:14px;"></i><span id="user-name-chip">—</span></div>
+            <button class="btn" onclick="doLogout()"><i class="ti ti-logout"></i>登出</button>
+          </div>
+        </div>
+
+        <div class="content">
+
+          <!-- DASHBOARD (Chief) -->
+          <div class="section active" id="sec-dashboard">
+            <div class="stats-row">
+              <div class="stat-card"><div class="stat-label">稿件總數</div><div class="stat-value" id="d-total">—</div><div class="stat-delta">所有稿件</div></div>
+              <div class="stat-card"><div class="stat-label">審查中</div><div class="stat-value" id="d-reviewing">—</div><div class="stat-delta" style="color:#BA7517;">進行中</div></div>
+              <div class="stat-card"><div class="stat-label">已接受</div><div class="stat-value" id="d-accepted">—</div></div>
+              <div class="stat-card"><div class="stat-label">已發表</div><div class="stat-value" id="d-published">—</div></div>
+            </div>
+            <div class="sec-title">最近稿件</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>稿件編號</th><th>標題</th><th>作者</th><th>提交日期</th><th>狀態</th></tr></thead>
+                <tbody id="dash-table"><tr><td colspan="5" class="loading">載入中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUBMIT -->
+          <div class="section" id="sec-submit">
+            <div class="form-row">
+              <div>
+                <div class="form-group"><label class="form-label">文章標題 *</label><input type="text" id="f-title" placeholder="請輸入完整論文標題"></div>
+                <div class="form-group"><label class="form-label">文章類型</label>
+                  <select id="f-type">
+                    <option>原著論文 (Original Article)</option>
+                    <option>系統性回顧 (Systematic Review)</option>
+                    <option>個案報告 (Case Report)</option>
+                    <option>敘述性回顧 (Narrative Review)</option>
+                    <option>通訊 (Letter to Editor)</option>
+                  </select>
+                </div>
+                <div class="form-group"><label class="form-label">通訊作者</label><input type="text" id="f-author" placeholder="姓名，職稱"></div>
+                <div class="form-group"><label class="form-label">關鍵字（逗號分隔）</label><input type="text" id="f-keywords" placeholder="gynecologic oncology, minimally invasive"></div>
+                <div class="form-group"><label class="form-label">狀態</label>
+                  <select id="f-status"><option>初審中</option><option>審查中</option><option>需大修</option><option>小修</option><option>已接受</option><option>已拒絕</option></select>
+                </div>
+              </div>
+              <div>
+                <div class="form-group"><label class="form-label">摘要</label><textarea id="f-abstract" style="min-height:130px;" placeholder="背景、方法、結果、結論"></textarea></div>
+                <div class="form-group">
+                  <label class="form-label">上傳主稿（PDF / DOCX）</label>
+                  <div class="upload-zone">
+                    <input type="file" id="f-file" accept=".pdf,.doc,.docx" onchange="onFileSelect('f-file','f-file-name','f-file-shown')">
+                    <i class="ti ti-file-upload"></i>點擊或拖曳上傳主稿
+                    <div style="font-size:11px;color:var(--tx3);margin-top:4px;">PDF、DOC、DOCX</div>
+                  </div>
+                  <div class="file-shown" id="f-file-shown"><i class="ti ti-file-check"></i><span id="f-file-name"></span></div>
+                  <div class="prog" id="f-prog"><div class="prog-fill" id="f-prog-fill"></div></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">補充資料（可選）</label>
+                  <div class="upload-zone">
+                    <input type="file" id="f-supp" accept=".pdf,.doc,.docx,.xlsx,.png,.jpg" onchange="onFileSelect('f-supp','f-supp-name','f-supp-shown')">
+                    <i class="ti ti-files"></i>圖表、補充表格
+                  </div>
+                  <div class="file-shown" id="f-supp-shown"><i class="ti ti-file-check"></i><span id="f-supp-name"></span></div>
+                  <div class="prog" id="s-prog"><div class="prog-fill" id="s-prog-fill"></div></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:12px;border-top:0.5px solid var(--bd3);">
+              <button class="btn" onclick="clearSubmitForm()">清除</button>
+              <button class="btn btn-primary" id="submit-btn" onclick="submitManuscript()"><i class="ti ti-send"></i>送出稿件</button>
+            </div>
+          </div>
+
+          <!-- ALL MANUSCRIPTS (Chief) -->
+          <div class="section" id="sec-manuscripts">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <select id="filter-status" onchange="loadManuscripts()" style="width:160px;">
+                <option value="">所有狀態</option>
+                <option>初審中</option><option>審查中</option><option>需大修</option><option>小修</option><option>已接受</option><option>已拒絕</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>稿件編號</th><th>標題</th><th>類型</th><th>通訊作者</th><th>提交日期</th><th>狀態</th><th>操作</th></tr></thead>
+                <tbody id="ms-table"><tr><td colspan="7" class="loading">載入中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- MY MANUSCRIPTS (Reviewer) -->
+          <div class="section" id="sec-my-manuscripts">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>稿件編號</th><th>標題</th><th>類型</th><th>提交日期</th><th>狀態</th><th>操作</th></tr></thead>
+                <tbody id="my-ms-table"><tr><td colspan="6" class="loading">載入中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- MANUSCRIPT DETAIL -->
+          <div class="section" id="sec-detail">
+            <div class="back-btn" id="back-btn"><i class="ti ti-arrow-left"></i>返回列表</div>
+            <div id="detail-content"><div class="loading">載入中…</div></div>
+          </div>
+
+          <!-- ALL REVIEWS (Chief) -->
+          <div class="section" id="sec-review">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>稿件編號</th><th>標題</th><th>審稿人</th><th>截止日</th><th>狀態</th><th>操作</th></tr></thead>
+                <tbody id="rev-table"><tr><td colspan="6" class="loading">載入中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- MY REVIEWS (Reviewer) -->
+          <div class="section" id="sec-my-reviews">
+            <div class="info-box"><i class="ti ti-info-circle"></i>以下是分配給您的審稿任務</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>稿件編號</th><th>標題</th><th>截止日</th><th>狀態</th><th>操作</th></tr></thead>
+                <tbody id="my-rev-table"><tr><td colspan="5" class="loading">載入中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- REVIEWERS MANAGEMENT (Chief) -->
+          <div class="section" id="sec-reviewers">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+              <button class="btn btn-primary" onclick="openAddReviewer()"><i class="ti ti-plus"></i>新增審稿人</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>姓名</th><th>機構</th><th>Email</th><th>專長</th><th>操作</th></tr></thead>
+                <tbody id="rev-list-table"><tr><td colspan="5" class="loading">載入中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- PUBLISHED -->
+          <div class="section" id="sec-published">
+            <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+              <div class="stat-card"><div class="stat-label">總發表數</div><div class="stat-value" id="pub-total">—</div></div>
+              <div class="stat-card"><div class="stat-label">總被引用數</div><div class="stat-value" id="pub-cit">—</div></div>
+              <div class="stat-card"><div class="stat-label">平均 IF</div><div class="stat-value" id="pub-if">—</div></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>年份</th><th>標題</th><th>期刊</th><th>IF</th><th>被引用</th><th>DOI</th><th>操作</th></tr></thead>
+                <tbody id="pub-table"><tr><td colspan="7" class="loading">載入中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ADD PUBLICATION -->
+          <div class="section" id="sec-addpub">
+            <div class="form-row">
+              <div>
+                <div class="form-group"><label class="form-label">文章標題 *</label><input type="text" id="p-title" placeholder="發表文章標題"></div>
+                <div class="form-group"><label class="form-label">期刊名稱</label><input type="text" id="p-journal"></div>
+                <div class="form-group"><label class="form-label">發表年份</label><input type="number" id="p-year" placeholder="2026"></div>
+              </div>
+              <div>
+                <div class="form-group"><label class="form-label">Impact Factor</label><input type="number" id="p-if" step="0.1"></div>
+                <div class="form-group"><label class="form-label">被引用次數</label><input type="number" id="p-cit" placeholder="0"></div>
+                <div class="form-group"><label class="form-label">DOI</label><input type="text" id="p-doi" placeholder="10.xxxx/xxxxx"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:12px;border-top:0.5px solid var(--bd3);">
+              <button class="btn btn-primary" onclick="submitPublication()"><i class="ti ti-certificate"></i>新增發表</button>
+            </div>
+          </div>
+
+          <!-- STATS -->
+          <div class="section" id="sec-stats">
+            <div class="stats-row">
+              <div class="stat-card"><div class="stat-label">稿件總數</div><div class="stat-value" id="st-total">—</div></div>
+              <div class="stat-card"><div class="stat-label">已接受</div><div class="stat-value" id="st-accepted">—</div></div>
+              <div class="stat-card"><div class="stat-label">接受率</div><div class="stat-value" id="st-rate">—</div></div>
+              <div class="stat-card"><div class="stat-label">發表篇數</div><div class="stat-value" id="st-pub">—</div></div>
+            </div>
+            <div class="sec-title">各狀態分布</div>
+            <div id="stats-bars" style="background:var(--bg2);border-radius:var(--r8);padding:20px;display:flex;flex-direction:column;gap:12px;"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MANUSCRIPT MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">編輯稿件</div><button class="btn" onclick="closeModal('edit-modal')"><i class="ti ti-x"></i></button></div>
+    <div class="form-group"><label class="form-label">標題</label><input type="text" id="e-title"></div>
+    <div class="form-group"><label class="form-label">通訊作者</label><input type="text" id="e-author"></div>
+    <div class="form-group"><label class="form-label">狀態</label>
+      <select id="e-status"><option>初審中</option><option>審查中</option><option>需大修</option><option>小修</option><option>已接受</option><option>已拒絕</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">摘要</label><textarea id="e-abstract"></textarea></div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('edit-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD REVIEWER MODAL -->
+<div class="modal-bg" id="reviewer-modal">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">新增審稿人</div><button class="btn" onclick="closeModal('reviewer-modal')"><i class="ti ti-x"></i></button></div>
+    <div class="info-box"><i class="ti ti-info-circle"></i>系統會自動建立登入帳號並寄送 Email 給審稿人</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">姓名 *</label><input type="text" id="rv-name" placeholder="Dr. Wang"></div>
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="rv-email" placeholder="reviewer@hospital.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">機構</label><input type="text" id="rv-institution" placeholder="台大醫院婦產科"></div>
+      <div class="form-group"><label class="form-label">專長</label><input type="text" id="rv-specialty" placeholder="Gynecologic Oncology"></div>
+    </div>
+    <div class="form-group"><label class="form-label">預設密碼 *</label><input type="text" id="rv-password" placeholder="設定初始密碼（至少6位）"></div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('reviewer-modal')">取消</button>
+      <button class="btn btn-primary" id="add-rev-btn" onclick="createReviewer()"><i class="ti ti-user-plus"></i>建立帳號</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSIGN REVIEW MODAL -->
+<div class="modal-bg" id="assign-modal">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">分配審稿人</div><button class="btn" onclick="closeModal('assign-modal')"><i class="ti ti-x"></i></button></div>
+    <div class="form-group"><label class="form-label">選擇審稿人</label>
+      <select id="assign-reviewer-id" onchange="fillReviewerEmail()"></select>
+    </div>
+    <div class="form-group"><label class="form-label">審稿人 Email</label><input type="text" id="assign-email" readonly style="background:var(--bg2);"></div>
+    <div class="form-group"><label class="form-label">截止日期</label><input type="date" id="assign-deadline"></div>
+    <div class="form-group"><label class="form-label">整體評估（可先填）</label><textarea id="assign-overall" placeholder="整體評估意見"></textarea></div>
+    <div class="form-group"><label class="form-label">主要意見（Major）</label><textarea id="assign-major" placeholder="Major comments"></textarea></div>
+    <div class="form-group"><label class="form-label">次要意見（Minor）</label><textarea id="assign-minor" placeholder="Minor comments"></textarea></div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('assign-modal')">取消</button>
+      <button class="btn btn-primary" onclick="submitAssign()"><i class="ti ti-send"></i>確認分配</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW DETAIL MODAL -->
+<div class="modal-bg" id="review-detail-modal">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">審稿意見詳情</div><button class="btn" onclick="closeModal('review-detail-modal')"><i class="ti ti-x"></i></button></div>
+    <div id="review-detail-content"></div>
+    <div class="modal-ftr"><button class="btn" onclick="closeModal('review-detail-modal')">關閉</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SURL='https://gjfehvkgiedzfjkqomrr.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqZmVodmtnaWVkemZqa3FvbXJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNTAyODksImV4cCI6MjA5NDkyNjI4OX0.kuP6gXUThco1KWEwWFlT-Ou6dFd2jhfsIzHxMa0j1J4';
+const {createClient}=supabase;
+const db=createClient(SURL,SKEY);
+
+let currentUser=null, currentRole=null, currentProfile=null;
+let editingId=null, assigningMsId=null, backToSection=null;
+let reviewersList=[];
+
+// ── AUTH ──
+async function doLogin(){
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='請填寫 Email 和密碼';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='登入中…';
+  const {data,error}=await db.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='登入';
+  if(error){err.textContent='登入失敗：'+error.message;err.style.display='block';return;}
+  await initApp(data.user);
+}
+
+async function initApp(user){
+  currentUser=user;
+  const {data:profile}=await db.from('user_profiles').select('*').eq('id',user.id).single();
+  currentProfile=profile;
+  currentRole=profile?.role||'reviewer';
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('app-page').classList.add('show');
+  document.getElementById('user-name-chip').textContent=profile?.name||user.email;
+  document.getElementById('sidebar-role').textContent=currentRole==='chief_editor'?'Chief Editor':'審稿人';
+  if(currentRole==='chief_editor'){
+    document.getElementById('menu-chief').style.display='block';
+    document.getElementById('menu-reviewer').style.display='none';
+    nav('dashboard',document.querySelector('#menu-chief .nav-item'));
+  } else {
+    document.getElementById('menu-chief').style.display='none';
+    document.getElementById('menu-reviewer').style.display='block';
+    nav('my-reviews',document.querySelector('#menu-reviewer .nav-item'));
+  }
+}
+
+async function doLogout(){
+  await db.auth.signOut();
+  currentUser=null;currentRole=null;currentProfile=null;
+  document.getElementById('app-page').classList.remove('show');
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('l-email').value='';
+  document.getElementById('l-pass').value='';
+}
+
+// check existing session
+db.auth.getSession().then(({data:{session}})=>{
+  if(session) initApp(session.user);
+});
+
+// ── NAV ──
+const pageTitles={dashboard:'總覽',submit:'新稿投稿',manuscripts:'所有稿件','my-manuscripts':'我的稿件',review:'所有審稿','my-reviews':'我的審稿任務',reviewers:'審稿人管理',published:'已發表文章',addpub:'新增發表',stats:'統計報表',detail:'稿件詳情'};
+
+function nav(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById('sec-'+id);
+  if(sec) sec.classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('page-title').textContent=pageTitles[id]||id;
+  if(id==='dashboard') loadDashboard();
+  if(id==='manuscripts') loadManuscripts();
+  if(id==='my-manuscripts') loadMyManuscripts();
+  if(id==='review') loadAllReviews();
+  if(id==='my-reviews') loadMyReviews();
+  if(id==='reviewers') loadReviewersList();
+  if(id==='published') loadPublications();
+  if(id==='stats') loadStats();
+}
+
+// ── TOAST ──
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(err?' err':'');
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// ── HELPERS ──
+function chipClass(s){
+  if(s==='已接受') return 'green';
+  if(['初審中','審查中'].includes(s)) return 'amber';
+  if(['需大修','小修'].includes(s)) return 'blue';
+  if(s==='已拒絕') return 'red';
+  return '';
+}
+function fd(d){return d?d.slice(0,10):'—';}
+function genMsNum(){return 'MS-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*9000)+1000);}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+// ── FILE UPLOAD ──
+function onFileSelect(inputId,nameId,shownId){
+  const f=document.getElementById(inputId).files[0];
+  if(!f) return;
+  document.getElementById(shownId).style.display='flex';
+  document.getElementById(nameId).textContent=f.name+' ('+(f.size/1024).toFixed(0)+' KB)';
+}
+
+async function uploadFile(inputId,folder,progId,fillId){
+  const f=document.getElementById(inputId).files[0];
+  if(!f) return null;
+  const ext=f.name.split('.').pop();
+  const path=`${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  document.getElementById(progId).style.display='block';
+  document.getElementById(fillId).style.width='40%';
+  const {data,error}=await db.storage.from('manuscripts').upload(path,f,{upsert:true});
+  document.getElementById(fillId).style.width='100%';
+  setTimeout(()=>{document.getElementById(progId).style.display='none';document.getElementById(fillId).style.width='0%';},600);
+  if(error){toast('檔案上傳失敗：'+error.message,true);return null;}
+  return db.storage.from('manuscripts').getPublicUrl(path).data.publicUrl;
+}
+
+// ── DASHBOARD ──
+async function loadDashboard(){
+  const {data:ms}=await db.from('manuscripts').select('*').order('submitted_at',{ascending:false}).limit(8);
+  const {data:pubs}=await db.from('publications').select('id');
+  const total=ms?ms.length:0;
+  const reviewing=ms?ms.filter(m=>['審查中','需大修','小修'].includes(m.status)).length:0;
+  const accepted=ms?ms.filter(m=>m.status==='已接受').length:0;
+  document.getElementById('d-total').textContent=total;
+  document.getElementById('d-reviewing').textContent=reviewing;
+  document.getElementById('d-accepted').textContent=accepted;
+  document.getElementById('d-published').textContent=pubs?pubs.length:0;
+  document.getElementById('ms-badge').textContent=total;
+  const tbody=document.getElementById('dash-table');
+  if(!ms||ms.length===0){tbody.innerHTML='<tr><td colspan="5" class="empty">尚無稿件</td></tr>';return;}
+  tbody.innerHTML=ms.map(m=>`<tr style="cursor:pointer;" onclick="openDetail('${m.id}','dashboard')">
+    <td style="font-size:11px;color:var(--tx3);">${m.ms_number||'—'}</td>
+    <td style="max-width:200px;font-size:12px;">${m.title}</td>
+    <td style="font-size:12px;">${m.corresponding_author||'—'}</td>
+    <td style="font-size:12px;">${fd(m.submitted_at)}</td>
+    <td><span class="chip ${chipClass(m.status)}">${m.status||'—'}</span></td>
+  </tr>`).join('');
+}
+
+// ── SUBMIT ──
+async function submitManuscript(){
+  const title=document.getElementById('f-title').value.trim();
+  if(!title){toast('請填寫文章標題',true);return;}
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> 上傳中…';
+  const fileUrl=await uploadFile('f-file','main','f-prog','f-prog-fill');
+  const suppUrl=await uploadFile('f-supp','supp','s-prog','s-prog-fill');
+  const {error}=await db.from('manuscripts').insert({
+    ms_number:genMsNum(),title,
+    article_type:document.getElementById('f-type').value,
+    corresponding_author:document.getElementById('f-author').value,
+    keywords:document.getElementById('f-keywords').value,
+    abstract:document.getElementById('f-abstract').value,
+    status:document.getElementById('f-status').value,
+    file_url:fileUrl,supp_url:suppUrl,
+    submitted_by:currentUser.id
+  });
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-send"></i>送出稿件';
+  if(error){toast('送出失敗：'+error.message,true);return;}
+  toast('稿件送出成功！');
+  clearSubmitForm();
+  if(currentRole==='chief_editor') loadDashboard();
+  else loadMyManuscripts();
+}
+
+function clearSubmitForm(){
+  ['f-title','f-keywords','f-abstract'].forEach(id=>document.getElementById(id).value='');
+  ['f-file','f-supp'].forEach(id=>document.getElementById(id).value='');
+  ['f-file-shown','f-supp-shown'].forEach(id=>document.getElementById(id).style.display='none');
+}
+
+// ── ALL MANUSCRIPTS (Chief) ──
+async function loadManuscripts(){
+  const filter=document.getElementById('filter-status').value;
+  let q=db.from('manuscripts').select('*').order('submitted_at',{ascending:false});
+  if(filter) q=q.eq('status',filter);
+  const {data:ms}=await q;
+  const tbody=document.getElementById('ms-table');
+  if(!ms||ms.length===0){tbody.innerHTML='<tr><td colspan="7" class="empty">尚無稿件</td></tr>';return;}
+  document.getElementById('ms-badge').textContent=ms.length;
+  tbody.innerHTML=ms.map(m=>`<tr>
+    <td style="font-size:11px;color:var(--tx3);">${m.ms_number||'—'}</td>
+    <td style="max-width:160px;font-size:12px;cursor:pointer;color:#185FA5;" onclick="openDetail('${m.id}','manuscripts')">${m.title}</td>
+    <td style="font-size:11px;">${m.article_type||'—'}</td>
+    <td style="font-size:12px;">${m.corresponding_author||'—'}</td>
+    <td style="font-size:12px;">${fd(m.submitted_at)}</td>
+    <td><span class="chip ${chipClass(m.status)}">${m.status||'—'}</span></td>
+    <td style="display:flex;gap:4px;">
+      <button class="btn btn-sm" onclick="openEdit('${m.id}')"><i class="ti ti-edit"></i></button>
+      <button class="btn btn-sm" style="background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;" onclick="openAssign('${m.id}')"><i class="ti ti-user-plus"></i></button>
+      <button class="btn btn-sm btn-danger" onclick="deleteMs('${m.id}')"><i class="ti ti-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+// ── MY MANUSCRIPTS (Reviewer) ──
+async function loadMyManuscripts(){
+  const {data:ms}=await db.from('manuscripts').select('*').eq('submitted_by',currentUser.id).order('submitted_at',{ascending:false});
+  const tbody=document.getElementById('my-ms-table');
+  if(!ms||ms.length===0){tbody.innerHTML='<tr><td colspan="6" class="empty">您尚未投稿</td></tr>';return;}
+  tbody.innerHTML=ms.map(m=>`<tr>
+    <td style="font-size:11px;color:var(--tx3);">${m.ms_number||'—'}</td>
+    <td style="max-width:180px;font-size:12px;cursor:pointer;color:#185FA5;" onclick="openDetail('${m.id}','my-manuscripts')">${m.title}</td>
+    <td style="font-size:11px;">${m.article_type||'—'}</td>
+    <td style="font-size:12px;">${fd(m.submitted_at)}</td>
+    <td><span class="chip ${chipClass(m.status)}">${m.status||'—'}</span></td>
+    <td><button class="btn btn-sm" onclick="openDetail('${m.id}','my-manuscripts')"><i class="ti ti-eye"></i></button></td>
+  </tr>`).join('');
+}
+
+// ── DETAIL VIEW ──
+async function openDetail(id, fromSection){
+  backToSection=fromSection;
+  document.getElementById('back-btn').onclick=()=>nav(fromSection, document.querySelector('.nav-item.active'));
+  nav('detail',null);
+  document.getElementById('page-title').textContent='稿件詳情';
+  const container=document.getElementById('detail-content');
+  container.innerHTML='<div class="loading">載入中…</div>';
+  const {data:m}=await db.from('manuscripts').select('*').eq('id',id).single();
+  const {data:reviews}=await db.from('reviews').select('*, reviewers(name,email,institution)').eq('manuscript_id',id);
+  if(!m){container.innerHTML='<div class="empty">找不到稿件</div>';return;}
+  const isChief=currentRole==='chief_editor';
+  container.innerHTML=`
+    <div class="detail-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+        <div class="detail-title">${m.title}</div>
+        <span class="chip ${chipClass(m.status)}" style="font-size:12px;padding:4px 12px;flex-shrink:0;">${m.status||'—'}</span>
+      </div>
+      <div class="detail-meta">
+        <div class="meta-item"><i class="ti ti-id-badge" style="font-size:13px;"></i>${m.ms_number||'—'}</div>
+        <div class="meta-item"><i class="ti ti-file-description" style="font-size:13px;"></i>${m.article_type||'—'}</div>
+        <div class="meta-item"><i class="ti ti-user" style="font-size:13px;"></i>${m.corresponding_author||'—'}</div>
+        <div class="meta-item"><i class="ti ti-calendar" style="font-size:13px;"></i>${fd(m.submitted_at)}</div>
+      </div>
+      ${m.keywords?`<div style="font-size:12px;color:var(--tx2);margin-bottom:4px;"><i class="ti ti-tags" style="font-size:13px;margin-right:4px;"></i>${m.keywords}</div>`:''}
+      ${m.file_url||m.supp_url?`<div style="display:flex;gap:8px;margin-top:8px;">
+        ${m.file_url?`<a class="file-link" href="${m.file_url}" target="_blank"><i class="ti ti-download"></i>下載主稿</a>`:''}
+        ${m.supp_url?`<a class="file-link" href="${m.supp_url}" target="_blank"><i class="ti ti-download"></i>下載補充資料</a>`:''}
+      </div>`:''}
+      ${m.abstract?`<div class="detail-sec"><div class="detail-sec-title">摘要</div><div class="detail-body">${m.abstract}</div></div>`:''}
+    </div>
+
+    <!-- REVIEWS SECTION -->
+    <div class="sec-title">審稿意見 (${reviews?reviews.length:0})</div>
+    ${reviews&&reviews.length>0?reviews.map(r=>`
+      <div class="rev-card">
+        <div class="rev-card-hdr">
+          <div>
+            <div style="font-size:13px;font-weight:500;">${r.reviewers?.name||'審稿人'}</div>
+            <div style="font-size:11px;color:var(--tx2);">${r.reviewers?.institution||''} ${r.reviewers?.email?'· '+r.reviewers.email:''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:var(--tx3);">截止：${fd(r.deadline)}</span>
+            <span class="chip ${r.status==='已完成'?'green':'amber'}">${r.status}</span>
+            ${isChief?`<button class="btn btn-sm btn-danger" onclick="deleteReview('${r.id}','${id}')"><i class="ti ti-trash"></i></button>`:''}
+          </div>
+        </div>
+        ${r.overall_comment?`<div class="cmt"><div class="cmt-lbl">整體評估</div>${r.overall_comment}</div>`:''}
+        ${r.major_comments?`<div class="cmt major"><div class="cmt-lbl major">主要意見 (Major)</div>${r.major_comments}</div>`:''}
+        ${r.minor_comments?`<div class="cmt minor"><div class="cmt-lbl minor">次要意見 (Minor)</div>${r.minor_comments}</div>`:''}
+      </div>`).join(''):'<div style="color:var(--tx3);font-size:13px;margin-bottom:16px;">尚無審稿意見</div>'}
+
+    ${isChief?`<button class="btn btn-primary" style="margin-top:4px;" onclick="openAssign('${m.id}')"><i class="ti ti-user-plus"></i>分配審稿人</button>`:''}
+    ${isChief?`<button class="btn" style="margin-top:4px;margin-left:8px;" onclick="openEdit('${m.id}')"><i class="ti ti-edit"></i>編輯稿件</button>`:''}
+  `;
+}
+
+// ── ALL REVIEWS (Chief) ──
+async function loadAllReviews(){
+  const {data}=await db.from('reviews').select('*, manuscripts(ms_number,title), reviewers(name,email)').order('created_at',{ascending:false});
+  const tbody=document.getElementById('rev-table');
+  const pending=data?data.filter(r=>r.status==='待審').length:0;
+  document.getElementById('rev-badge').textContent=pending;
+  if(!data||data.length===0){tbody.innerHTML='<tr><td colspan="6" class="empty">尚無審稿任務</td></tr>';return;}
+  tbody.innerHTML=data.map(r=>`<tr>
+    <td style="font-size:11px;color:var(--tx3);">${r.manuscripts?.ms_number||'—'}</td>
+    <td style="max-width:160px;font-size:12px;">${r.manuscripts?.title?.slice(0,35)||'—'}</td>
+    <td style="font-size:12px;">${r.reviewers?.name||'—'}<br><span style="font-size:11px;color:var(--tx3);">${r.reviewers?.email||''}</span></td>
+    <td style="font-size:12px;">${fd(r.deadline)}</td>
+    <td><span class="chip ${r.status==='已完成'?'green':'amber'}">${r.status}</span></td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteReview('${r.id}',null)"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('');
+}
+
+// ── MY REVIEWS (Reviewer) ──
+async function loadMyReviews(){
+  const {data}=await db.from('reviews').select('*, manuscripts(ms_number,title,abstract,keywords,file_url,supp_url,status,corresponding_author)').eq('assigned_to',currentUser.id).order('created_at',{ascending:false});
+  const tbody=document.getElementById('my-rev-table');
+  if(!data||data.length===0){tbody.innerHTML='<tr><td colspan="5" class="empty">尚無分配給您的審稿任務</td></tr>';return;}
+  tbody.innerHTML=data.map(r=>`<tr>
+    <td style="font-size:11px;color:var(--tx3);">${r.manuscripts?.ms_number||'—'}</td>
+    <td style="max-width:200px;font-size:12px;">${r.manuscripts?.title?.slice(0,40)||'—'}</td>
+    <td style="font-size:12px;">${fd(r.deadline)}</td>
+    <td><span class="chip ${r.status==='已完成'?'green':'amber'}">${r.status}</span></td>
+    <td><button class="btn btn-sm btn-primary" onclick="openReviewDetail('${r.id}')"><i class="ti ti-eye"></i>查看</button></td>
+  </tr>`).join('');
+}
+
+async function openReviewDetail(reviewId){
+  const {data:r}=await db.from('reviews').select('*, manuscripts(*)').eq('id',reviewId).single();
+  if(!r) return;
+  const m=r.manuscripts;
+  document.getElementById('review-detail-content').innerHTML=`
+    <div style="margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px;">${m?.title||'—'}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="chip">${m?.ms_number||'—'}</span>
+        <span class="chip ${chipClass(m?.status)}">${m?.status||'—'}</span>
+        <span class="chip">截止：${fd(r.deadline)}</span>
+      </div>
+      ${m?.keywords?`<div style="font-size:12px;color:var(--tx2);margin-bottom:8px;"><i class="ti ti-tags" style="font-size:12px;margin-right:4px;"></i>${m.keywords}</div>`:''}
+      ${m?.file_url?`<a class="file-link" href="${m.file_url}" target="_blank" style="margin-bottom:12px;display:inline-flex;"><i class="ti ti-download"></i>下載主稿</a>`:''}
+      ${m?.supp_url?`<a class="file-link" href="${m.supp_url}" target="_blank" style="margin-left:8px;margin-bottom:12px;display:inline-flex;"><i class="ti ti-download"></i>補充資料</a>`:''}
+      ${m?.abstract?`<div style="background:var(--bg2);border-radius:var(--r8);padding:14px;margin-top:8px;font-size:13px;line-height:1.7;">${m.abstract}</div>`:''}
+    </div>
+    <div style="border-top:0.5px solid var(--bd3);padding-top:16px;">
+      <div class="sec-title">我的審稿意見</div>
+      <div class="form-group"><label class="form-label">整體評估</label><textarea id="rd-overall" style="min-height:80px;">${r.overall_comment||''}</textarea></div>
+      <div class="form-group"><label class="form-label">主要意見 (Major)</label><textarea id="rd-major" style="min-height:80px;">${r.major_comments||''}</textarea></div>
+      <div class="form-group"><label class="form-label">次要意見 (Minor)</label><textarea id="rd-minor">${r.minor_comments||''}</textarea></div>
+      <div class="form-group"><label class="form-label">建議決定</label>
+        <select id="rd-decision"><option value="">請選擇</option><option>接受</option><option>小修後接受</option><option>大修後重審</option><option>拒絕</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px;border-top:0.5px solid var(--bd3);margin-top:8px;">
+      <button class="btn btn-primary" onclick="saveReviewComment('${reviewId}')"><i class="ti ti-device-floppy"></i>儲存意見</button>
+    </div>
+  `;
+  document.getElementById('review-detail-modal').classList.add('show');
+}
+
+async function saveReviewComment(reviewId){
+  const {error}=await db.from('reviews').update({
+    overall_comment:document.getElementById('rd-overall').value,
+    major_comments:document.getElementById('rd-major').value,
+    minor_comments:document.getElementById('rd-minor').value,
+    decision:document.getElementById('rd-decision').value,
+    status:'已完成'
+  }).eq('id',reviewId);
+  if(error){toast('儲存失敗',true);return;}
+  toast('審稿意見已儲存！');
+  closeModal('review-detail-modal');
+  loadMyReviews();
+}
+
+// ── EDIT MANUSCRIPT ──
+async function openEdit(id){
+  const {data}=await db.from('manuscripts').select('*').eq('id',id).single();
+  if(!data) return;
+  editingId=id;
+  document.getElementById('e-title').value=data.title||'';
+  document.getElementById('e-author').value=data.corresponding_author||'';
+  document.getElementById('e-status').value=data.status||'初審中';
+  document.getElementById('e-abstract').value=data.abstract||'';
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+async function saveEdit(){
+  const {error}=await db.from('manuscripts').update({
+    title:document.getElementById('e-title').value,
+    corresponding_author:document.getElementById('e-author').value,
+    status:document.getElementById('e-status').value,
+    abstract:document.getElementById('e-abstract').value,
+    updated_at:new Date().toISOString()
+  }).eq('id',editingId);
+  if(error){toast('儲存失敗',true);return;}
+  toast('已儲存');closeModal('edit-modal');
+  loadManuscripts();loadDashboard();
+}
+
+async function deleteMs(id){
+  if(!confirm('確定要刪除此稿件？')) return;
+  await db.from('manuscripts').delete().eq('id',id);
+  toast('已刪除');loadManuscripts();loadDashboard();
+}
+
+// ── ASSIGN REVIEW ──
+async function openAssign(msId){
+  assigningMsId=msId;
+  const {data:revs}=await db.from('reviewers').select('*').order('name');
+  reviewersList=revs||[];
+  const sel=document.getElementById('assign-reviewer-id');
+  if(!reviewersList.length){toast('請先新增審稿人',true);return;}
+  sel.innerHTML=reviewersList.map(r=>`<option value="${r.id}" data-email="${r.email}">${r.name} — ${r.institution||''}</option>`).join('');
+  fillReviewerEmail();
+  document.getElementById('assign-deadline').value='';
+  document.getElementById('assign-overall').value='';
+  document.getElementById('assign-major').value='';
+  document.getElementById('assign-minor').value='';
+  document.getElementById('assign-modal').classList.add('show');
+}
+
+function fillReviewerEmail(){
+  const sel=document.getElementById('assign-reviewer-id');
+  const opt=sel.options[sel.selectedIndex];
+  document.getElementById('assign-email').value=opt?opt.dataset.email||'':'';
+}
+
+async function submitAssign(){
+  const reviewerId=document.getElementById('assign-reviewer-id').value;
+  if(!reviewerId){toast('請選擇審稿人',true);return;}
+  // get reviewer's user_profile id
+  const {data:profile}=await db.from('user_profiles').select('id').eq('email',document.getElementById('assign-email').value).single();
+  const {error}=await db.from('reviews').insert({
+    manuscript_id:assigningMsId,
+    reviewer_id:reviewerId,
+    assigned_to:profile?.id||null,
+    deadline:document.getElementById('assign-deadline').value||null,
+    overall_comment:document.getElementById('assign-overall').value,
+    major_comments:document.getElementById('assign-major').value,
+    minor_comments:document.getElementById('assign-minor').value,
+    status:'待審'
+  });
+  if(error){toast('分配失敗：'+error.message,true);return;}
+  toast('審稿人已分配！');closeModal('assign-modal');
+  if(backToSection==='detail'||document.getElementById('sec-detail').classList.contains('active')){
+    openDetail(assigningMsId,backToSection);
+  } else {
+    loadAllReviews();
+  }
+}
+
+async function deleteReview(id, msId){
+  if(!confirm('確定要刪除此審稿任務？')) return;
+  await db.from('reviews').delete().eq('id',id);
+  toast('已刪除');
+  if(msId) openDetail(msId,backToSection);
+  else loadAllReviews();
+}
+
+// ── REVIEWERS MANAGEMENT ──
+function openAddReviewer(){
+  ['rv-name','rv-email','rv-institution','rv-specialty','rv-password'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('reviewer-modal').classList.add('show');
+}
+
+async function createReviewer(){
+  const name=document.getElementById('rv-name').value.trim();
+  const email=document.getElementById('rv-email').value.trim();
+  const pass=document.getElementById('rv-password').value;
+  if(!name||!email||!pass){toast('請填寫姓名、Email 和密碼',true);return;}
+  if(pass.length<6){toast('密碼至少需要 6 位',true);return;}
+  const btn=document.getElementById('add-rev-btn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> 建立中…';
+  // create auth user via admin (using service role not available in frontend, use signUp instead)
+  const {data:authData,error:authErr}=await db.auth.admin?
+    db.auth.admin.createUser({email,password:pass,email_confirm:true}):
+    {data:null,error:{message:'需要後端支援'}};
+  // fallback: use signUp
+  let userId=authData?.user?.id;
+  if(authErr||!userId){
+    // try signup approach
+    const {data:su,error:sue}=await db.auth.signUp({email,password:pass});
+    if(sue){toast('建立帳號失敗：'+sue.message,true);btn.disabled=false;btn.innerHTML='<i class="ti ti-user-plus"></i>建立帳號';return;}
+    userId=su?.user?.id;
+  }
+  if(userId){
+    await db.from('user_profiles').upsert({id:userId,name,email,role:'reviewer',institution:document.getElementById('rv-institution').value,specialty:document.getElementById('rv-specialty').value});
+  }
+  // save to reviewers table
+  const {error:revErr}=await db.from('reviewers').insert({
+    name,email,
+    institution:document.getElementById('rv-institution').value,
+    specialty:document.getElementById('rv-specialty').value
+  });
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-user-plus"></i>建立帳號';
+  if(revErr){toast('儲存審稿人資料失敗：'+revErr.message,true);return;}
+  toast('審稿人帳號已建立！');closeModal('reviewer-modal');loadReviewersList();
+}
+
+async function loadReviewersList(){
+  const {data}=await db.from('reviewers').select('*').order('name');
+  const tbody=document.getElementById('rev-list-table');
+  if(!data||data.length===0){tbody.innerHTML='<tr><td colspan="5" class="empty">尚無審稿人</td></tr>';return;}
+  tbody.innerHTML=data.map(r=>`<tr>
+    <td style="font-size:13px;font-weight:500;">${r.name}</td>
+    <td style="font-size:12px;">${r.institution||'—'}</td>
+    <td style="font-size:12px;"><a href="mailto:${r.email}" style="color:#185FA5;">${r.email}</a></td>
+    <td style="font-size:12px;">${r.specialty||'—'}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteReviewer('${r.id}')"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('');
+}
+
+async function deleteReviewer(id){
+  if(!confirm('確定要刪除此審稿人？')) return;
+  await db.from('reviewers').delete().eq('id',id);
+  toast('已刪除');loadReviewersList();
+}
+
+// ── PUBLICATIONS ──
+async function loadPublications(){
+  const {data}=await db.from('publications').select('*').order('year',{ascending:false});
+  const tbody=document.getElementById('pub-table');
+  if(!data||data.length===0){tbody.innerHTML='<tr><td colspan="7" class="empty">尚無發表紀錄</td></tr>';return;}
+  const totCit=data.reduce((s,p)=>s+(p.citations||0),0);
+  const ifData=data.filter(p=>p.impact_factor);
+  const avgIF=ifData.length>0?ifData.reduce((s,p)=>s+p.impact_factor,0)/ifData.length:0;
+  document.getElementById('pub-total').textContent=data.length;
+  document.getElementById('pub-cit').textContent=totCit;
+  document.getElementById('pub-if').textContent=avgIF?avgIF.toFixed(1):'—';
+  tbody.innerHTML=data.map(p=>`<tr>
+    <td style="font-size:12px;">${p.year||'—'}</td>
+    <td style="max-width:200px;font-size:12px;">${p.title}</td>
+    <td style="font-size:12px;">${p.journal||'—'}</td>
+    <td style="font-size:12px;">${p.impact_factor||'—'}</td>
+    <td><span class="chip blue">${p.citations||0}</span></td>
+    <td style="font-size:11px;">${p.doi?`<a href="https://doi.org/${p.doi}" target="_blank" style="color:#185FA5;">${p.doi}</a>`:'—'}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="deletePub('${p.id}')"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('');
+}
+
+async function submitPublication(){
+  const title=document.getElementById('p-title').value.trim();
+  if(!title){toast('請填寫標題',true);return;}
+  const {error}=await db.from('publications').insert({
+    title,journal:document.getElementById('p-journal').value,
+    year:parseInt(document.getElementById('p-year').value)||new Date().getFullYear(),
+    impact_factor:parseFloat(document.getElementById('p-if').value)||null,
+    citations:parseInt(document.getElementById('p-cit').value)||0,
+    doi:document.getElementById('p-doi').value
+  });
+  if(error){toast('新增失敗：'+error.message,true);return;}
+  toast('發表紀錄已新增！');
+  ['p-title','p-journal','p-year','p-if','p-cit','p-doi'].forEach(id=>document.getElementById(id).value='');
+  nav('published',null);
+}
+
+async function deletePub(id){
+  if(!confirm('確定要刪除？')) return;
+  await db.from('publications').delete().eq('id',id);
+  toast('已刪除');loadPublications();
+}
+
+// ── STATS ──
+async function loadStats(){
+  const {data:ms}=await db.from('manuscripts').select('status');
+  const {data:pubs}=await db.from('publications').select('id');
+  const total=ms?ms.length:0;
+  const accepted=ms?ms.filter(m=>m.status==='已接受').length:0;
+  const rate=total>0?Math.round(accepted/total*100):0;
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-accepted').textContent=accepted;
+  document.getElementById('st-rate').textContent=rate+'%';
+  document.getElementById('st-pub').textContent=pubs?pubs.length:0;
+  const statuses=['初審中','審查中','需大修','小修','已接受','已拒絕'];
+  const colors={'初審中':'#FAC775','審查中':'#378ADD','需大修':'#E24B4A','小修':'#7F77DD','已接受':'#1D9E75','已拒絕':'#888780'};
+  document.getElementById('stats-bars').innerHTML=statuses.map(s=>{
+    const count=ms?ms.filter(m=>m.status===s).length:0;
+    const pct=total>0?Math.round(count/total*100):0;
+    return `<div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>${s}</span><span style="color:var(--tx2);">${count} 件 (${pct}%)</span></div>
+      <div style="background:var(--bd3);border-radius:4px;height:8px;"><div style="background:${colors[s]};width:${pct}%;height:8px;border-radius:4px;transition:width 0.5s;"></div></div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
